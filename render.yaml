@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: bajaj-finserv-qualifier
+    env: java
+    plan: free
+    buildCommand: "./mvnw clean package -DskipTests"
+    startCommand: "java -jar target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar"
+    envVars:
+      - key: BAJAJ_REG_NO
+        value: "YOUR_REG_NO"
+      - key: BAJAJ_EMAIL
+        value: "YOUR_EMAIL"

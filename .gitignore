@@ -1,0 +1,35 @@
+# Target build outputs
+target/
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven wrapper jar must be kept, but log scripts and properties should be standard
+!.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# VS Code
+.vscode/
+
+# Logs and OS files
+log/
+*.log
+.DS_Store
+Thumbs.db
