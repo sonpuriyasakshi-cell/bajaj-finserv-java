@@ -1,14 +1,9 @@
-server:
-  port: 8080
-
 bajaj:
   challenge:
-    name: "Sakshi Sonpuriya"
-    regNo: "YOUR_REG_NO"
-    email: "YOUR_EMAIL"
-    baseUrl: "https://bfhldevapigw.healthrx.co.in"
+    name: Sakshi Sonpuriya
+    regNo: 0827AL231108
+    email: sonpuriyasakshi@gmail.com
 
 logging:
   level:
     root: INFO
-    com.bajaj.qualifier: DEBUG

@@ -18,10 +18,10 @@ public class ChallengeService {
     @Value("${bajaj.challenge.name:Sakshi Sonpuriya}")
     private String name;
 
-    @Value("${bajaj.challenge.regNo:YOUR_REG_NO}")
+    @Value("${bajaj.challenge.regNo:0827AL231108}")
     private String regNo;
 
-    @Value("${bajaj.challenge.email:YOUR_EMAIL}")
+    @Value("${bajaj.challenge.email:sonpuriyasakshi@gmail.com}")
     private String email;
 
     @Value("${bajaj.challenge.baseUrl:https://bfhldevapigw.healthrx.co.in}")
