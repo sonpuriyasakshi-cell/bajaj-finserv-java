@@ -1,19 +1,79 @@
-# Bajaj Finserv Health Qualifier - Spring Boot 3 Application
+# Bajaj Finserv Health Qualifier — Spring Boot 3
 
-This is a complete, production-ready Spring Boot 3 application written in Java 17 for the **Bajaj Finserv Health Qualifier** task.
-
-It is designed to automate the required hiring workflow on startup without requiring any manual REST controller trigger.
+[![Java](https://img.shields.io/badge/Java-17-blue)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen)](https://spring.io/projects/spring-boot)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
 
 ---
 
-## 🌟 Key Features
+## 📋 Project Overview
 
-- **Automated Workflow on Startup**: Initiates execution immediately upon startup using Spring's `CommandLineRunner`.
-- **Reactive HTTP Client (`WebClient`)**: Uses Spring WebFlux's modern, non-blocking `WebClient` for high performance instead of the deprecated `RestTemplate`.
-- **Dynamic Question Logic**: Automatically parses your registration number's digits to determine whether to execute **Question 1 SQL (Odd)** or **Question 2 SQL (Even)**.
-- **Robust Error Handling**: Comprehensive try-catch blocks and explicit log outputs indicating exactly where errors occurred.
-- **Production-Ready Docker Setup**: Multi-stage `Dockerfile` to produce minimal production images using `eclipse-temurin:17-jdk`.
-- **Render blueprint deployment**: Cloud-ready configuration via `render.yaml`.
+This is a **complete, production-ready automation application** built with Spring Boot 3 and Java 17 for the Bajaj Finserv Health hiring qualifier challenge.
+
+It is **NOT a web server**. It runs as a pure command-line automation program that:
+1. Starts automatically via `CommandLineRunner` (no REST endpoints, no port binding)
+2. Calls the Bajaj Finserv Health API to generate a webhook
+3. Detects the correct SQL question based on the registration number's last two digits
+4. Submits the final SQL query to the generated webhook URL using JWT authorization
+5. Exits cleanly with `System.exit(0)` on success
+
+---
+
+## 🔄 Webhook Flow
+
+```
+App Startup
+    │
+    ▼
+CommandLineRunner (StartupRunner)
+    │
+    ▼
+POST /hiring/generateWebhook/JAVA
+Body: { name, regNo, email }
+    │
+    ▼
+Response: { webhook, accessToken }
+    │
+    ▼
+Check last 2 digits of regNo
+    ├── ODD  → Use QUESTION 1 SQL
+    └── EVEN → Use QUESTION 2 SQL
+    │
+    ▼
+POST <webhook_url>
+Headers: Authorization: <accessToken>
+Body: { "finalQuery": "<selected SQL>" }
+    │
+    ▼
+{"success":true,"message":"Webhook processed successfully"}
+    │
+    ▼
+System.exit(0) — Clean Shutdown
+```
+
+---
+
+## ⚡ Startup Automation
+
+The application triggers its full workflow **on startup** using Spring's `CommandLineRunner` interface. This means:
+- **No HTTP endpoints** need to be called manually
+- **No REST controllers** exist in this project
+- `SpringApplication` is configured with `WebApplicationType.NONE` to **prevent any web server from starting**
+- **No port binding** occurs — `8080` is never touched
+
+---
+
+## 🧰 Tech Stack
+
+| Technology | Version | Purpose |
+|---|---|---|
+| Java | 17 | Language runtime |
+| Spring Boot | 3.2.5 | Application framework |
+| Spring WebFlux | 6.x | WebClient for async HTTP calls |
+| Project Lombok | Latest | Boilerplate reduction |
+| Jackson | 2.x | JSON serialization |
+| Maven | 3.9.6 | Build tool |
 
 ---
 
@@ -24,99 +84,123 @@ bajaj-finserv-qualifier/
 ├── src/
 │   └── main/
 │       ├── java/com/bajaj/qualifier/
-│       │   ├── BajajFinservQualifierApplication.java  # Bootstrap Application Class
+│       │   ├── BajajFinservQualifierApplication.java  ← Main class (WebApplicationType.NONE)
 │       │   ├── config/
-│       │   │   └── WebClientConfig.java               # Configures WebClient with timeouts
+│       │   │   └── WebClientConfig.java               ← WebClient bean with timeouts
 │       │   ├── constant/
-│       │   │   └── ChallengeConstants.java            # Holds target endpoints & SQL Queries
+│       │   │   └── ChallengeConstants.java            ← API path + SQL queries
 │       │   ├── dto/
-│       │   │   ├── QuerySubmissionRequest.java        # Solution submission DTO
-│       │   │   ├── WebhookRequest.java                # Webhook generation Request DTO
-│       │   │   └── WebhookResponse.java               # Webhook generation Response DTO
+│       │   │   ├── WebhookRequest.java                ← Candidate details payload
+│       │   │   ├── WebhookResponse.java               ← Webhook URL + JWT token
+│       │   │   └── QuerySubmissionRequest.java        ← Final SQL submission payload
 │       │   ├── runner/
-│       │   │   └── StartupRunner.java                 # CommandLineRunner hook
+│       │   │   └── StartupRunner.java                 ← CommandLineRunner trigger
 │       │   └── service/
-│       │       └── ChallengeService.java              # Logic controller & API Orchestrator
+│       │       └── ChallengeService.java              ← Full orchestration logic
 │       └── resources/
-│           └── application.yml                        # App configuration properties
-├── Dockerfile                                         # Multi-stage production container setup
-├── docker-compose.yml                                 # Orchestrates application running locally
-├── render.yaml                                        # Render blueprint configuration
-├── pom.xml                                            # Maven dependencies
-├── .gitignore                                         # Version control ignore lists
-└── README.md                                          # This documentation
+│           └── application.yml                        ← Candidate configuration
+├── Dockerfile                                         ← Multi-stage container build
+├── docker-compose.yml                                 ← Local container orchestration
+├── render.yaml                                        ← Render deployment blueprint
+├── mvnw / mvnw.cmd                                    ← Maven wrapper scripts
+├── .mvn/wrapper/                                      ← Maven wrapper config
+├── pom.xml                                            ← Maven dependencies
+├── .gitignore                                         ← Version control rules
+└── README.md                                          ← This documentation
 ```
 
 ---
 
-## 🔧 Setup & Configuration
+## 🔧 Configuration
 
-You can configure the application details by updating the `src/main/resources/application.yml` file:
+Update `src/main/resources/application.yml`:
 
 ```yaml
 bajaj:
   challenge:
-    name: "Sakshi Sonpuriya"
-    regNo: "YOUR_REG_NO" # <-- Enter your registration number here (e.g. REG12347)
-    email: "YOUR_EMAIL"  # <-- Enter your email here
-```
+    name: Sakshi Sonpuriya
+    regNo: 0827AL231108         # ← Your registration number
+    email: sonpuriyasakshi@gmail.com  # ← Your email
 
-Alternatively, you can supply them as **Environment Variables** at runtime:
-* `BAJAJ_REG_NO`
-* `BAJAJ_EMAIL`
-* `BAJAJ_NAME`
+logging:
+  level:
+    root: INFO
+```
 
 ---
 
-## 🚀 Running Locally
+## 🚀 Build Instructions
 
 ### Prerequisites
-* Java 17 JDK installed
-* Maven installed (or use the provided Maven Wrapper `./mvnw`)
+- Java 17+ installed
+- Internet access (to download Maven deps on first run)
 
-### 1. Build the Application
-Run the Maven package command to compile the code and build the JAR artifact:
+### Build the JAR
 ```bash
 ./mvnw clean package
 ```
+> On Windows: `.\mvnw.cmd clean package`
 
-### 2. Run the JAR
-Execute the packaged JAR directly:
-```bash
-java -jar target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar
+Expected output:
 ```
-Or run the Spring Boot plugin goal:
+[INFO] BUILD SUCCESS
+[INFO] Building jar: target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar
+[INFO] Total time: ~15s
+```
+
+---
+
+## ▶️ Local Run Instructions
+
+### Option 1 — Maven Spring Boot Run (recommended)
 ```bash
 ./mvnw spring-boot:run
 ```
+> On Windows: `.\mvnw.cmd spring-boot:run`
 
-Check the console output logs. You will see detailed workflow execution steps:
-1. Sending candidate details to `/hiring/generateWebhook/JAVA`.
-2. Extracting `webhook` URL and `accessToken` (JWT).
-3. Analyzing registration number (checking odd/even ending digits).
-4. Submitting the selected SQL query to the returned webhook URL.
+### Option 2 — Run the built JAR directly
+```bash
+java -jar target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar
+```
+
+### Expected Output
+```
+=================================================================
+Starting Bajaj Finserv Qualifier Challenge Workflow...
+=================================================================
+Step 1: Requesting Webhook & Access Token from: https://bfhldevapigw.healthrx.co.in/hiring/generateWebhook/JAVA
+Step 1 SUCCESS! Details retrieved:
+-> Returned Webhook URL: https://bfhldevapigw.healthrx.co.in/hiring/testWebhook/JAVA
+-> Access Token (first 15 chars): eyJhbGciOiJIUzI...
+=================================================================
+QUESTION DETECTION LOGIC
+Registration Number: 0827AL231108
+Extracted last two digits even? -> true
+Selected Question: QUESTION 2 SQL (Even)
+=================================================================
+Step 2: Submitting solution to Webhook URL: ...
+Step 2 SUCCESS! Solution submitted successfully.
+Server Response:
+{"success":true,"message":"Webhook processed successfully"}
+=================================================================
+[INFO] BUILD SUCCESS
+```
 
 ---
 
 ## 🐳 Docker Deployment
-
-A multi-stage Docker build packages the application and exposes it on port `8080`.
 
 ### Build Docker Image
 ```bash
 docker build -t bajaj-finserv-qualifier .
 ```
 
-### Run Container (Injecting Env Vars)
+### Run Container
 ```bash
-docker run -p 8080:8080 \
-  -e BAJAJ_REG_NO="YOUR_REG_NO" \
-  -e BAJAJ_EMAIL="YOUR_EMAIL" \
-  bajaj-finserv-qualifier
+docker run bajaj-finserv-qualifier
 ```
 
 ### Run with Docker Compose
-Simply modify the environment variables inside `docker-compose.yml` and execute:
 ```bash
 docker-compose up --build
 ```
@@ -125,37 +209,46 @@ docker-compose up --build
 
 ## ☁️ Render Deployment
 
-Deploying the service to **Render** is automated using the Blueprint specification (`render.yaml`).
+### Using Blueprint (`render.yaml`)
+1. Push this repository to GitHub
+2. Login to [Render.com](https://render.com)
+3. Click **New +** → **Blueprint**
+4. Connect your GitHub repository
+5. Render automatically reads `render.yaml`:
+   - **Build Command**: `./mvnw clean package -DskipTests`
+   - **Start Command**: `java -jar target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar`
 
-### Setup Blueprint on Render:
-1. Push your repository to your GitHub account.
-2. In the Render Dashboard, click **New +** and select **Blueprint**.
-3. Connect your GitHub repository.
-4. Render will automatically read `render.yaml` to set up:
-   * Build Command: `./mvnw clean package -DskipTests`
-   * Start Command: `java -jar target/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar`
-5. Make sure to define the environment variables `BAJAJ_REG_NO` and `BAJAJ_EMAIL` in Render's dashboard.
+---
+
+## 📦 Downloadable JAR
+
+The prebuilt JAR is available as a GitHub Release artifact:
+
+> **Raw JAR Download**: `https://github.com/<your-username>/bajaj-finserv-qualifier/releases/download/v1.0/bajaj-finserv-qualifier-0.0.1-SNAPSHOT.jar`
+
+*(Update link after pushing to GitHub)*
 
 ---
 
 ## 🐙 Push to GitHub
 
-To quickly publish your solution onto GitHub, run these commands from the root directory:
-
 ```bash
-# Initialize local git repository
-git init
-
-# Add all files to stage
-git add .
-
-# Create initial commit
-git commit -m "Initial commit: Complete Bajaj Finserv Qualifier solution"
-
-# Add your remote origin repository URL (Replace with your actual repo link)
-git remote add origin https://github.com/your-username/bajaj-finserv-qualifier.git
-
-# Set main branch and push
+# Repository is already initialized and committed locally
+# Add your GitHub remote:
+git remote add origin https://github.com/<your-username>/bajaj-finserv-qualifier.git
 git branch -M main
 git push -u origin main
 ```
+
+---
+
+## ✅ Submission Checklist
+
+- [x] App runs on startup automatically
+- [x] No REST endpoint required to trigger flow
+- [x] WebClient used instead of RestTemplate
+- [x] Correct SQL selected based on regNo digits
+- [x] JWT used in Authorization header
+- [x] Server responds: `{"success":true,"message":"Webhook processed successfully"}`
+- [x] Application exits cleanly
+- [x] BUILD SUCCESS verified
